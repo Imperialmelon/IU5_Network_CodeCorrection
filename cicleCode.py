@@ -85,10 +85,11 @@ def mod_2_add(pol1: list, pol2: str):
 def main():
     n, k = map(int, input().split())
     vect_for_coding = list(map(str, input().split()))
+    print(f'Информационны вектор: {"".join(vect_for_coding)}')
     encoder = CyclicEncoder(n, k)
-    print(f'Информационный вектор : {vect_for_coding}')
     coded_vect, start_remainder = encoder.encode(vect_for_coding)
-    print(f'Закодированный вектор : {coded_vect}')
+    print(f'Закодированный вектор: {coded_vect}')
+    print(start_remainder)
     # print(coded_vect)
 
     detectedErrors = [0] * (n + 1)
@@ -101,9 +102,10 @@ def main():
         cnt = 0
         current_mult_errors = math.comb(n, mult)
         errors_per_group[mult] = current_mult_errors
-
-        error_vectors = get_all_error_vectors(7, mult)
+        # print('got')
+        error_vectors = get_all_error_vectors(n, mult)
         for error_vect in error_vectors:
+            # print(error_vect)
             coded_vect_copy = coded_vect.copy()
             coded_vect_plus_error = mod_2_add(coded_vect.copy(), error_vect)
             coded_vect_plus_error_copy = coded_vect_plus_error.copy()
@@ -113,7 +115,9 @@ def main():
             remainder = np.pad(remainder, (n - k - len(remainder), 0))
             remainder_bits = remainder.astype(int) % 2
             remainder_bits = remainder_bits.tolist()
+            # print(remainder_bits)
             if 1 in remainder_bits:
+                detectedErrors[mult] += 1
                 error = get_error(remainder_bits)
                 for ind, i in enumerate(error):
                     if i == 1:
@@ -132,6 +136,8 @@ def main():
                             for index, num in enumerate(start_remainder):
                                 pos_corrected[len(pos_corrected) - index - 1] = (pos_corrected[len(pos_corrected) - index - 1] + start_remainder[len(start_remainder) - 1 - index])%2
 
+                            # print(f'pos_corrected : {pos_corrected}')
+                            # print(f'coded_vect : {coded_vect}')
                             pos_corrected = pos_corrected[:k]
                             pos_corrected = list(map(str, pos_corrected))
                             if pos_corrected == vect_for_coding:
@@ -141,14 +147,13 @@ def main():
 
 
         from tabulate import tabulate
-    
 
-        headers = ["Кратность ошибки", "Число ошибок данной кратности", "Исправлено ошибок",
+        headers = ["Кратность ошибки", "Число ошибок данной кратности", "Обнаружено ошибок", "Исправлено ошибок",
                    "Корректирующая способность"]
     data = []
 
     for i in range(1, n + 1):
-        data.append([i, errors_per_group[i], corrections[i], corrections[i] / errors_per_group[i]])
+        data.append([i, errors_per_group[i],detectedErrors[i], corrections[i], corrections[i] / errors_per_group[i]])
 
     print(tabulate(data, headers=headers, floatfmt=".2f"))
 
